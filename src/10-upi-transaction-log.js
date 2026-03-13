@@ -47,5 +47,78 @@
  *   //      frequentContact: "Swiggy", allAbove100: false, hasLargeTransaction: true }
  */
 export function analyzeUPITransactions(transactions) {
-  // Your code here
+  if (!Array.isArray(transactions) || transactions.length === 0) return null;
+
+  // 1️⃣ Filter valid transactions
+  const validTxns = transactions.filter(txn => {
+    return txn &&
+      (txn.type === "credit" || txn.type === "debit") &&
+      typeof txn.amount === "number" &&
+      txn.amount > 0;
+  });
+
+  if (validTxns.length === 0) return null;
+
+  // 2️⃣ Total credit and debit
+  const totalCredit = validTxns
+    .filter(txn => txn.type === "credit")
+    .reduce((sum, txn) => sum + txn.amount, 0);
+
+  const totalDebit = validTxns
+    .filter(txn => txn.type === "debit")
+    .reduce((sum, txn) => sum + txn.amount, 0);
+
+  // 3️⃣ Net balance
+  const netBalance = totalCredit - totalDebit;
+
+  // 4️⃣ Transaction count
+  const transactionCount = validTxns.length;
+
+  // 5️⃣ Average transaction
+  const totalAmount = validTxns.reduce((sum, txn) => sum + txn.amount, 0);
+  const avgTransaction = Math.round(totalAmount / transactionCount);
+
+  // 6️⃣ Highest transaction
+  const highestTransaction = validTxns.reduce((maxTxn, txn) => {
+    return txn.amount > (maxTxn.amount || 0) ? txn : maxTxn;
+  }, {});
+
+  // 7️⃣ Category breakdown
+  const categoryBreakdown = validTxns.reduce((obj, txn) => {
+    obj[txn.category] = (obj[txn.category] || 0) + txn.amount;
+    return obj;
+  }, {});
+
+  // 8️⃣ Frequent contact
+  const contactCount = validTxns.reduce((obj, txn) => {
+    obj[txn.to] = (obj[txn.to] || 0) + 1;
+    return obj;
+  }, {});
+  let frequentContact = "";
+  let maxCount = 0;
+  for (const [contact, count] of Object.entries(contactCount)) {
+    if (count > maxCount) {
+      maxCount = count;
+      frequentContact = contact;
+    }
+  }
+
+  // 9️⃣ All above 100?
+  const allAbove100 = validTxns.every(txn => txn.amount > 100);
+
+  // 🔟 Has large transaction >= 5000?
+  const hasLargeTransaction = validTxns.some(txn => txn.amount >= 5000);
+
+  return {
+    totalCredit,
+    totalDebit,
+    netBalance,
+    transactionCount,
+    avgTransaction,
+    highestTransaction,
+    categoryBreakdown,
+    frequentContact,
+    allAbove100,
+    hasLargeTransaction
+  };
 }
